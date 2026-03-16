@@ -72,7 +72,6 @@ const kidSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-kidSchema.index({ slug: 1 }, { unique: true });
 kidSchema.index({ "reading.sessions.date": -1 });
 kidSchema.index({ "math.games.playedAt": -1 });
 
