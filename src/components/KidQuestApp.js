@@ -6,7 +6,7 @@ const DEFAULT_READING_FORM = {
   date: new Date().toISOString().slice(0, 10),
   minutes: "",
   pagesRead: "",
-  bookTitle: "",
+  bookId: "",
 };
 
 function formatDate(value) {
@@ -72,7 +72,7 @@ export default function KidQuestApp() {
       setReadingForm({
         ...DEFAULT_READING_FORM,
         date: new Date().toISOString().slice(0, 10),
-        bookTitle: kidPayload.kid.currentBooks?.[0]?.title || "",
+        bookId: kidPayload.kid.currentBooks?.[0]?.id || "",
       });
     } catch (loadError) {
       setError(loadError.message);
@@ -139,7 +139,7 @@ export default function KidQuestApp() {
       setSuccessMessage("Reading session saved.");
       setReadingForm((currentForm) => ({
         ...DEFAULT_READING_FORM,
-        bookTitle: currentForm.bookTitle,
+        bookId: currentForm.bookId,
       }));
       await refreshSelectedKid();
     } catch (saveError) {
@@ -259,7 +259,7 @@ export default function KidQuestApp() {
           <h1>Reading wins. Math reps. Parent-ready stats.</h1>
           <p>
             A tiny learning tracker that shows off a clean MongoDB document model with embedded
-            books, reading sessions, and math game history.
+            progress, reading sessions, math history, and referenced books.
           </p>
           <div className="status-strip">
             <span className="chip">Next.js app router</span>
@@ -360,7 +360,7 @@ export default function KidQuestApp() {
               <div className="panel grid">
                 <div>
                   <h3 className="panel-title">Current books</h3>
-                  <p className="section-copy">Embedded book documents make it easy to fetch the full reading snapshot in one read.</p>
+                  <p className="section-copy">Books live in their own collection, while kid-specific progress stays embedded with the child.</p>
                 </div>
 
                 <div className="book-grid">
@@ -368,7 +368,7 @@ export default function KidQuestApp() {
                     const progress = Math.round((book.currentPage / book.totalPages) * 100);
 
                     return (
-                      <article key={book.title} className="book-card">
+                      <article key={book.id} className="book-card">
                         <div>
                           <h4 className="card-title">{book.title}</h4>
                           <p className="muted">
@@ -413,19 +413,19 @@ export default function KidQuestApp() {
                 </div>
 
                 <div className="field">
-                  <label htmlFor="bookTitle">Book</label>
+                  <label htmlFor="bookId">Book</label>
                   <select
-                    id="bookTitle"
-                    value={readingForm.bookTitle}
+                    id="bookId"
+                    value={readingForm.bookId}
                     onChange={(event) =>
                       setReadingForm((currentForm) => ({
                         ...currentForm,
-                        bookTitle: event.target.value,
+                        bookId: event.target.value,
                       }))
                     }
                   >
                     {kid.currentBooks.map((book) => (
-                      <option key={book.title} value={book.title}>
+                      <option key={book.id} value={book.id}>
                         {book.title}
                       </option>
                     ))}

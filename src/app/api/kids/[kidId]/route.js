@@ -1,6 +1,8 @@
 import { Types } from "mongoose";
 
 import { connectToDatabase } from "@/lib/db";
+import { toClientBook } from "@/lib/books";
+import Book from "@/models/Book";
 import Kid from "@/models/Kid";
 
 export async function GET(_request, { params }) {
@@ -13,7 +15,9 @@ export async function GET(_request, { params }) {
   try {
     await connectToDatabase();
 
-    const kid = await Kid.findById(kidId).lean();
+    const kid = await Kid.findById(kidId)
+      .populate({ path: "reading.currentBooks.bookId", model: Book })
+      .lean();
 
     if (!kid) {
       return Response.json({ error: "Kid not found." }, { status: 404 });
@@ -33,6 +37,10 @@ export async function GET(_request, { params }) {
         attempts: game.attempts,
       }));
 
+    const currentBooks = (kid.reading?.currentBooks ?? [])
+      .map((entry) => toClientBook(entry))
+      .filter(Boolean);
+
     return Response.json({
       kid: {
         id: kid._id.toString(),
@@ -40,7 +48,7 @@ export async function GET(_request, { params }) {
         age: kid.age,
         slug: kid.slug,
         avatarColor: kid.avatarColor,
-        currentBooks: kid.reading?.currentBooks ?? [],
+        currentBooks,
         readingSessions,
         mathGames,
         mathGameCount: kid.math?.games?.length ?? 0,

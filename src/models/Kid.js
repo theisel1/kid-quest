@@ -2,10 +2,11 @@ import mongoose from "mongoose";
 
 const currentBookSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },
-    author: { type: String, required: true },
-    level: { type: String, required: true },
-    totalPages: { type: Number, required: true, min: 1 },
+    bookId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+      required: true,
+    },
     currentPage: { type: Number, required: true, min: 0, default: 0 },
   },
   { _id: false }
@@ -13,6 +14,10 @@ const currentBookSchema = new mongoose.Schema(
 
 const readingSessionSchema = new mongoose.Schema(
   {
+    bookId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Book",
+    },
     date: { type: Date, required: true },
     minutes: { type: Number, required: true, min: 1 },
     pagesRead: { type: Number, required: true, min: 0 },

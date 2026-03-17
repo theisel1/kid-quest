@@ -4,19 +4,20 @@ Kid Quest is a small MVP built with Next.js, MongoDB Atlas, and Mongoose. It tra
 
 ## Why MongoDB is used here
 
-MongoDB is a reasonable fit here because each child has a small set of related data:
+MongoDB is a reasonable fit here because each child has a small set of related data, while book metadata can live separately and be reused:
 
 - current books
 - reading session history
 - math game history
 - per-question math results
 
-That makes a document model a practical choice. A single `Kid` document can hold the child profile plus the embedded arrays the app usually reads together. For this MVP, that keeps the queries straightforward and avoids splitting the data across multiple collections too early.
+That leads to a hybrid model. The `Kid` document still holds the embedded arrays the app reads together most often, but books now live in their own collection because they are shared metadata rather than child-specific state.
 
 ## MongoDB design decisions in plain English
 
-- Each kid is stored as one document in the `kids` collection.
-- `reading.currentBooks` is an embedded array because a child's active books are small, tightly related, and always shown with the child.
+- Books are stored in their own `books` collection so title, author, level, and total pages have one canonical record.
+- Each kid is still stored as one document in the `kids` collection.
+- `reading.currentBooks` is an embedded array of book references plus child-specific progress.
 - `reading.sessions` is an embedded array because reading logs are usually fetched with the child profile and are easy to append.
 - `math.games` is an embedded array, and each game embeds its 10 question results. That keeps one saved play session together.
 - A multikey index on `reading.sessions.date` helps recent reading activity and streak-related lookups.
@@ -64,6 +65,12 @@ cp .env.example .env.local
 npm run seed
 ```
 
+If you already have older embedded-book data in Atlas, run this once instead of reseeding:
+
+```bash
+npm run migrate:books
+```
+
 4. Start the app:
 
 ```bash
@@ -83,7 +90,7 @@ npm run dev
 
 ## Implementation notes
 
-- The schema is intentionally simple: one main collection and a few embedded arrays.
-- Mongoose is used for schema validation and nested document modeling.
+- The schema is intentionally simple: one `books` collection plus one `kids` collection with embedded arrays for activity.
+- Mongoose is used for schema validation, references, and nested document modeling.
 - The dashboard combines standard document reads with an aggregation pipeline for topic accuracy.
 - For a production app, you might eventually split very large histories into separate collections, add auth, and validate math answers fully on the server.

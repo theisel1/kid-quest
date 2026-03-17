@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 
 import { connectToDatabase } from "@/lib/db";
+import Book from "@/models/Book";
 import Kid from "@/models/Kid";
 
 export async function POST(request, { params }) {
@@ -15,15 +16,15 @@ export async function POST(request, { params }) {
     const date = body.date ? new Date(body.date) : null;
     const minutes = Number(body.minutes);
     const pagesRead = Number(body.pagesRead);
-    const bookTitle = typeof body.bookTitle === "string" ? body.bookTitle.trim() : "";
+    const bookId = typeof body.bookId === "string" ? body.bookId.trim() : "";
 
     if (!date || Number.isNaN(date.getTime())) {
       return Response.json({ error: "A valid date is required." }, { status: 400 });
     }
 
-    if (!bookTitle || minutes <= 0 || pagesRead < 0) {
+    if (!Types.ObjectId.isValid(bookId) || minutes <= 0 || pagesRead < 0) {
       return Response.json(
-        { error: "Book title, minutes, and pages read are required." },
+        { error: "Book, minutes, and pages read are required." },
         { status: 400 }
       );
     }
@@ -36,20 +37,26 @@ export async function POST(request, { params }) {
       return Response.json({ error: "Kid not found." }, { status: 404 });
     }
 
+    const book = await Book.findById(bookId).lean();
+
+    if (!book) {
+      return Response.json({ error: "Book not found." }, { status: 404 });
+    }
+
     kid.reading.sessions.push({
+      bookId,
       date,
       minutes,
       pagesRead,
-      bookTitle,
+      bookTitle: book.title,
     });
 
-    const matchingBook = kid.reading.currentBooks.find((book) => book.title === bookTitle);
+    const matchingBook = kid.reading.currentBooks.find(
+      (currentBook) => currentBook.bookId?.toString() === bookId
+    );
 
     if (matchingBook) {
-      matchingBook.currentPage = Math.min(
-        matchingBook.totalPages,
-        matchingBook.currentPage + pagesRead
-      );
+      matchingBook.currentPage = Math.min(book.totalPages, matchingBook.currentPage + pagesRead);
     }
 
     await kid.save();
